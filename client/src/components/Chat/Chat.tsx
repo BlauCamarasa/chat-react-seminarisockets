@@ -25,10 +25,11 @@ const Chat: React.FC = () => {
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
-
+    //Enviem el nom de l'usuari al conectar voa socket.io
     socketRef.current = io('http://localhost:3001', {
       auth: {
         token,
+        username: user.name,
       },
     });
 
@@ -43,6 +44,29 @@ const Chat: React.FC = () => {
         window.location.href = '/';
       }
     });
+
+    // Escoltem l'event user_joined que s'envia quan un usuari s'uneix a la sala
+    socketRef.current.on('user_joined', (data) => {
+      const systemMessage: ChatMessage = {
+        room,
+        author: 'Sistema',
+        message: data.message,
+        time: data.time,
+      };
+      setMessageList(prev => [...prev, systemMessage]);
+    });
+
+    // Escoltem l'event user_left que s'envia quan un usuari marxa de la sala
+    socketRef.current.on('user_left', (data) => {
+      const systemMessage = {
+        room,
+        author: 'Sistema',
+        message: data.message,
+        time: data.time,
+      };
+      setMessageList(prev => [...prev, systemMessage]);
+    });
+
 
     return () => {
       socketRef.current?.disconnect();
